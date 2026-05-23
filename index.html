@@ -2,316 +2,110 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家計管理入力システム</title>
-    <style>
-        /* 全体のリセットとベース設定 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: #000000;
-            color: #FFD700;
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        /* スマホサイズのコンテナ */
-        .app-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            background-color: #000000;
-        }
-
-        /* ヘッダー */
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-top: 10px;
-        }
-        h1 {
-            font-size: 24px;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        .notice-text {
-            font-size: 11px;
-            color: #CCCC00;
-            line-height: 1.4;
-            text-align: left;
-            background-color: #111100;
-            border: 1px solid #555500;
-            padding: 10px;
-            border-radius: 6px;
-        }
-
-        /* 入力エリア */
-        .input-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 16px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        input, select {
-            width: 100%;
-            background-color: #111111;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 12px;
-            font-size: 20px;
-            border-radius: 8px;
-            outline: none;
-            transition: 0.3s;
-            text-align: center;
-        }
-
-        input:focus, select:focus {
-            box-shadow: 0 0 10px #FFD700;
-            background-color: #222222;
-        }
-
-        input::placeholder {
-            color: #887700;
-        }
-
-        /* ボタンエリア（入力欄の上） */
-        .btn-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        button {
-            width: 100%;
-            background-color: #FFD700;
-            color: #000000;
-            border: none;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
-            transition: 0.2s;
-        }
-
-        button.btn-back {
-            background-color: #222222;
-            color: #FFD700;
-            border: 1px solid #FFD700;
-            box-shadow: none;
-        }
-
-        button:active {
-            transform: scale(0.98);
-            box-shadow: none;
-        }
-        
-        button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* ステータス表示 */
-        .status-message {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 40px;
-            color: #FFF;
-            text-shadow: 0 0 5px #FFD700;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>リアルローンアプリ</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="apple-mobile-web-app-title" content="リアルローン">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+    <div class="app-container">
+        <header>
+            <h1>リアルローンアプリ</h1>
+            <p class="notice-text">
+                ※本アプリは「元金二分割・現在価値割引法」を用いた超高精度シミュレーターです。
+            </p>
+        </header>
 
-<div class="app-container">
-    <header>
-        <h1 id="app-title">DATA INPUT</h1>
-        <div class="notice-text" id="progress-text">STEP: 1 / 28</div>
-    </header>
-
-    <div id="main-section">
         <div class="input-section">
             <div class="input-group">
-                <label id="question-label">年月はいつのですか？</label>
-                
-                <div class="btn-container" id="action-container">
-                    <button class="btn-back" id="back-btn" onclick="goBack()" disabled>戻る</button>
-                    <button id="next-btn" onclick="goNext()">次へ</button>
-                </div>
+                <label>車両価格 (万円)</label>
+                <input type="number" id="price" placeholder="例: 219.9" step="0.1">
+            </div>
+            <div class="input-group">
+                <label>頭金 (万円)</label>
+                <input type="number" id="down-payment" placeholder="例: 60" step="0.1">
+            </div>
+            <div class="input-group">
+                <label>支払期間 (年)</label>
+                <input type="number" id="years" placeholder="例: 5" step="1">
+            </div>
+            <div class="input-group">
+                <label>金利 (%)</label>
+                <input type="number" id="rate" placeholder="例: 3.5" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>年間のボーナス回数</label>
+                <select id="bonus-times">
+                    <option value="1">年1回</option>
+                    <option value="2" selected>年2回</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>ボーナス1回支払額 (万円)</label>
+                <input type="number" id="bonus-amount" placeholder="例: 15" step="0.1">
+            </div>
 
-                <div id="input-slot">
-                    </div>
+            <button id="calc-btn" onclick="calculateLoan()">ローンシミュレーション</button>
+        </div>
+
+        <div id="result-section" class="hidden">
+            <div class="result-box">
+                <p class="result-title">月々の支払額</p>
+                <p class="result-value"><span id="res-monthly">0</span> <span class="unit">万円</span></p>
+            </div>
+            <div class="result-box">
+                <p class="result-title">増えた分 (利息)</p>
+                <p class="result-value"><span id="res-interest">0</span> <span class="unit">万円</span></p>
+            </div>
+            <p class="joke-text">稼いだ分だけ気合いのローン！</p>
+
+            <button id="toggle-btn" class="secondary-btn" onclick="toggleSchedule()">詳細を表示</button>
+
+            <div id="schedule-section" class="hidden">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>年月</th>
+                            <th>返済額</th>
+                            <th>うち利息</th>
+                            <th>ローン残高</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="formula-section">
+            <h3>【高精度・元金二分割式の一般式】</h3>
+            <p>ボーナス分の元金を複利現価係数を用いて逆算し、毎月返済分と完全に分離して計算します。</p>
+            
+            <div class="formula-block">
+                <p class="formula-title">① 総支払回数 (M)</p>
+                <p class="formula-exp">M = 支払期間(年) × 12</p>
+            </div>
+            <div class="formula-block">
+                <p class="formula-title">② 月利 (r)</p>
+                <p class="formula-exp">r = 金利(%) ÷ 100 ÷ 12</p>
+            </div>
+            <div class="formula-block">
+                <p class="formula-title">③ ボーナス分に割り当てられる元金 (P<sub>b</sub>)</p>
+                <p class="formula-exp">P<sub>b</sub> = ボーナス1回額 × ∑ [ (1+r)<sup>−t</sup> ]</p>
+            </div>
+            <div class="formula-block">
+                <p class="formula-title">④ 毎月返済分の元金 (P<sub>m</sub>)</p>
+                <p class="formula-exp">P<sub>m</sub> = (車両価格 − 頭金) − P<sub>b</sub></p>
+            </div>
+            <div class="formula-block">
+                <p class="formula-title">⑤ 月々の支払額 (X)</p>
+                <p class="formula-exp">X = P<sub>m</sub> × [ r(1+r)<sup>M</sup> ] ÷ [ (1+r)<sup>M</sup> − 1 ]</p>
             </div>
         </div>
     </div>
 
-    <div class="status-message hidden" id="status-section">
-        <p id="status-text">スプレッドシートに送信中...</p>
-    </div>
-</div>
-
-<script>
-    // GASウェブアプリURL
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzD0dRAZDf0o9d_IWosCbDyPXKJrPfjeN1bWkLdQb4gJOe6Jt0lI_v9Ntbhqz-beZSy/exec";
-
-    // 💡 スプレッドシート記載の手入力項目を完璧に網羅（全28ステップ）
-    const steps = [
-        { name: "年月", label: "年月はいつのですか？", type: "select", options: ["2026/04", "2026/05", "2026/06", "2026/07", "2026/08", "2026/09"] },
-        { name: "基準賃金", label: "基準賃金はいくらですか？", type: "number" },
-        { name: "家族手当", label: "家族手当はいくらですか？", type: "number" },
-        { name: "休暇手当", label: "休暇手当はいくらですか？", type: "number" },
-        { name: "時間外手当", label: "時間外手当はいくらですか？", type: "number" },
-        { name: "休出手当", label: "休出手当はいくらですか？", type: "number" },
-        { name: "交代手当", label: "交代手当はいくらですか？", type: "number" },
-        { name: "深夜手当", label: "深夜手当はいくらですか？", type: "number" },
-        { name: "作業手当", label: "作業手当はいくらですか？", type: "number" },
-        { name: "通勤手当", label: "通勤手当はいくらですか？", type: "number" },
-        { name: "健康保険料", label: "健康保険料はいくらですか？", type: "number" },
-        { name: "子供子育て支援金", label: "子供子育て支援金はいくらですか？", type: "number" },
-        { name: "介護保険料", label: "介護保険料はいくらですか？", type: "number" },
-        { name: "厚生年金保険料", label: "厚生年金保険料はいくらですか？", type: "number" },
-        { name: "雇用保険料", label: "雇用保険料はいくらですか？", type: "number" },
-        { name: "所得税", label: "所得税はいくらですか？", type: "number" },
-        { name: "住民税", label: "住民税はいくらですか？", type: "number" },
-        { name: "組合費", label: "組合費はいくらですか？", type: "number" },
-        { name: "福祉・総合", label: "福祉・総合はいくらですか？", type: "number" },
-        { name: "住宅使用料（家賃）", label: "住宅使用料（家賃）はいくらですか？", type: "number" },
-        { name: "日産でんき", label: "日産でんき はいくらですか？", type: "number" },
-        { name: "東京ガス", label: "東京ガス はいくらですか？", type: "number" },
-        { name: "ahamo", label: "ahamo はいくらですか？", type: "number" },
-        { name: "WIFI", label: "WIFI はいくらですか？", type: "number" },
-        { name: "水道", label: "水道 はいくらですか？", type: "number" },
-        { name: "オートローン", label: "オートローンはいくらですか？", type: "number" }
-    ];
-
-    let currentStepIndex = 0;
-    let selectedMonth = "";
-    let inputValues = {}; 
-
-    function renderStep() {
-        const step = steps[currentStepIndex];
-        
-        // ヘッダー進行度テキスト更新
-        document.getElementById("progress-text").innerText = `STEP: ${currentStepIndex + 1} / ${steps.length} (${step.name})`;
-        document.getElementById("question-label").innerText = step.label;
-        
-        const slot = document.getElementById("input-slot");
-        slot.innerHTML = ""; 
-
-        if (step.type === "select") {
-            const select = document.createElement("select");
-            select.id = "current-input";
-            step.options.forEach(opt => {
-                const option = document.createElement("option");
-                option.value = opt;
-                option.text = opt;
-                if (selectedMonth === opt) option.selected = true;
-                select.appendChild(option);
-            });
-            slot.appendChild(select);
-        } else {
-            const input = document.createElement("input");
-            input.id = "current-input";
-            input.type = "number";
-            input.pattern = "\\d*"; 
-            input.placeholder = "0";
-            
-            if (inputValues[step.name] !== undefined) {
-                input.value = inputValues[step.name];
-            }
-            slot.appendChild(input);
-            input.focus();
-        }
-
-        document.getElementById("back-btn").disabled = (currentStepIndex === 0);
-        document.getElementById("next-btn").innerText = (currentStepIndex === steps.length - 1) ? "シートに送信" : "次へ";
-    }
-
-    function goNext() {
-        const el = document.getElementById("current-input");
-        const currentStep = steps[currentStepIndex];
-
-        if (currentStep.type === "select") {
-            selectedMonth = el.value;
-        } else {
-            inputValues[currentStep.name] = el.value || "0";
-        }
-
-        if (currentStepIndex < steps.length - 1) {
-            currentStepIndex++;
-            renderStep();
-        } else {
-            submitAllData();
-        }
-    }
-
-    function goBack() {
-        if (currentStepIndex > 0) {
-            currentStepIndex--;
-            renderStep();
-        }
-    }
-
-    async function submitAllData() {
-        document.getElementById("main-section").classList.add("hidden");
-        const statusSec = document.getElementById("status-section");
-        const statusTxt = document.getElementById("status-text");
-        statusSec.classList.remove("hidden");
-
-        const keys = Object.keys(inputValues);
-        
-        for (let i = 0; i < keys.length; i++) {
-            const rowName = keys[i];
-            const value = inputValues[rowName];
-            
-            statusTxt.innerHTML = `送信中... (${i + 1} / ${keys.length})<br><br><span style="color:#FFD700;">[ ${rowName}: ${value} ]</span>`;
-
-            const payload = {
-                month: selectedMonth,
-                rowName: rowName,
-                value: value
-            };
-
-            try {
-                await fetch(GAS_WEBAPP_URL, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
-            } catch (e) {
-                console.error("送信エラー:", e);
-            }
-        }
-
-        statusTxt.innerHTML = `COMPLETE!<br><br><span style="font-size:14px; color:#CCCC00;">スプレッドシートへの同期が完了しました。</span>`;
-        
-        const reloadBtn = document.createElement("button");
-        reloadBtn.innerText = "続けて別の月を入力する";
-        reloadBtn.style.marginTop = "30px";
-        reloadBtn.onclick = () => location.reload();
-        statusSec.appendChild(reloadBtn);
-    }
-
-    renderStep();
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
