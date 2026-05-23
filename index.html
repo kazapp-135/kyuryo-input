@@ -88,11 +88,11 @@
             color: #887700;
         }
 
-        /* ボタンエリア（入力欄の上に配置されるよう変更） */
+        /* ボタンエリア（入力欄の上） */
         .btn-container {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px; /* 入力欄との間に隙間を空ける */
+            margin-bottom: 15px;
         }
 
         button {
@@ -146,7 +146,7 @@
 <div class="app-container">
     <header>
         <h1 id="app-title">DATA INPUT</h1>
-        <div class="notice-text" id="progress-text">STEP: 1 / 16</div>
+        <div class="notice-text" id="progress-text">STEP: 1 / 28</div>
     </header>
 
     <div id="main-section">
@@ -174,8 +174,7 @@
     // GASウェブアプリURL
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzD0dRAZDf0o9d_IWosCbDyPXKJrPfjeN1bWkLdQb4gJOe6Jt0lI_v9Ntbhqz-beZSy/exec";
 
-    // 💡 修正ポイント：画像にある手入力項目（15個）をすべて網羅（合計16ステップ）
-    // ※「手取り給料」「光熱・通信費 合計」「使用可能金額」など自動計算される項目は除外しています
+    // 💡 スプレッドシート記載の手入力項目を完璧に網羅（全28ステップ）
     const steps = [
         { name: "年月", label: "年月はいつのですか？", type: "select", options: ["2026/04", "2026/05", "2026/06", "2026/07", "2026/08", "2026/09"] },
         { name: "基準賃金", label: "基準賃金はいくらですか？", type: "number" },
