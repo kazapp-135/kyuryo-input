@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家計管理入力システム</title>
     <style>
-        /* ご提示いただいたローンシミュレーション風高級CSSを完全ベース化 */
+        /* 全体のリセットとベース設定 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -27,9 +27,6 @@
             max-width: 400px;
             padding: 20px;
             background-color: #000000;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
         }
 
         /* ヘッダー */
@@ -59,9 +56,6 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            flex-grow: 1;
-            justify-content: center;
-            margin-bottom: 30px;
         }
 
         .input-group label {
@@ -77,7 +71,7 @@
             background-color: #111111;
             color: #FFD700;
             border: 2px solid #FFD700;
-            padding: 14px;
+            padding: 12px;
             font-size: 20px;
             border-radius: 8px;
             outline: none;
@@ -94,11 +88,11 @@
             color: #887700;
         }
 
-        /* ボタンエリア */
+        /* ボタンエリア（入力箇所のすぐ下に配置） */
         .btn-container {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         button {
@@ -136,7 +130,7 @@
             display: none !important;
         }
 
-        /* ローディング・完了画面用 */
+        /* 結果・ステータス表示エリア */
         .status-message {
             text-align: center;
             font-size: 18px;
@@ -155,29 +149,31 @@
         <div class="notice-text" id="progress-text">STEP: 1 / 8</div>
     </header>
 
-    <div class="input-section" id="main-section">
-        <div class="input-group">
-            <label id="question-label">年月はいつのですか？</label>
-            <div id="input-slot">
-                </div>
+    <div id="main-section">
+        <div class="input-section">
+            <div class="input-group">
+                <label id="question-label">年月はいつのですか？</label>
+                <div id="input-slot">
+                    </div>
+            </div>
+        </div>
+
+        <div class="btn-container" id="action-container">
+            <button class="btn-back" id="back-btn" onclick="goBack()" disabled>戻る</button>
+            <button id="next-btn" onclick="goNext()">次へ</button>
         </div>
     </div>
 
     <div class="status-message hidden" id="status-section">
         <p id="status-text">スプレッドシートに送信中...</p>
     </div>
-
-    <div class="btn-container" id="action-container">
-        <button class="btn-back" id="back-btn" onclick="goBack()" disabled>戻る</button>
-        <button id="next-btn" onclick="goNext()">次へ</button>
-    </div>
 </div>
 
 <script>
-    // ⚠️ あなたのGASウェブアプリのURLをここに貼り付けてください
+    // ユーザーから提供されたGASウェブアプリURLを直接セット
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzD0dRAZDf0o9d_IWosCbDyPXKJrPfjeN1bWkLdQb4gJOe6Jt0lI_v9Ntbhqz-beZSy/exec";
 
-    // 質問の定義リスト。スプレッドシートのA列の文字列（項目名）と一言一句完全に一致させてください。
+    // 入力項目の定義リスト（スプレッドシートのA列と完全一致）
     const steps = [
         { name: "年月", label: "年月はいつのですか？", type: "select", options: ["2026/04", "2026/05", "2026/06", "2026/07", "2026/08", "2026/09"] },
         { name: "基準賃金", label: "基準賃金はいくらですか？", type: "number" },
@@ -191,17 +187,17 @@
 
     let currentStepIndex = 0;
     let selectedMonth = "";
-    let inputValues = {}; // { 項目名: 値 } で一時保存
+    let inputValues = {}; 
 
     function renderStep() {
         const step = steps[currentStepIndex];
         
-        // ヘッダー進行度の更新
+        // ヘッダーの進行度テキスト更新
         document.getElementById("progress-text").innerText = `STEP: ${currentStepIndex + 1} / ${steps.length} (${step.name})`;
         document.getElementById("question-label").innerText = step.label;
         
         const slot = document.getElementById("input-slot");
-        slot.innerHTML = ""; // 初期化
+        slot.innerHTML = ""; 
 
         if (step.type === "select") {
             const select = document.createElement("select");
@@ -218,9 +214,9 @@
             const input = document.createElement("input");
             input.id = "current-input";
             input.type = "number";
-            input.pattern = "\\d*"; // スマホで数字キーボードを出す
+            input.pattern = "\\d*"; 
             input.placeholder = "0";
-            // 過去に戻ったときに元々入力していた値を復元
+            
             if (inputValues[step.name] !== undefined) {
                 input.value = inputValues[step.name];
             }
@@ -230,7 +226,7 @@
 
         // 戻るボタンの制御
         document.getElementById("back-btn").disabled = (currentStepIndex === 0);
-        // 最終ステップならボタンの文言を変更
+        // 最後の項目なら「シートに送信」に変える
         document.getElementById("next-btn").innerText = (currentStepIndex === steps.length - 1) ? "シートに送信" : "次へ";
     }
 
@@ -244,6 +240,7 @@
             inputValues[currentStep.name] = el.value || "0";
         }
 
+        // 最後の項目に達するまでは画面遷移のみ（通信しない）
         if (currentStepIndex < steps.length - 1) {
             currentStepIndex++;
             renderStep();
@@ -260,20 +257,20 @@
     }
 
     async function submitAllData() {
-        // UIを通信中モードに切り替え
+        // メイン画面を隠してステータス画面を表示
         document.getElementById("main-section").classList.add("hidden");
-        document.getElementById("action-container").classList.add("hidden");
         const statusSec = document.getElementById("status-section");
         const statusTxt = document.getElementById("status-text");
         statusSec.classList.remove("hidden");
 
-        // 各項目をループしてGASへ順番に送信
         const keys = Object.keys(inputValues);
+        
+        // 蓄積したデータを順番にGASへ送信
         for (let i = 0; i < keys.length; i++) {
             const rowName = keys[i];
             const value = inputValues[rowName];
             
-            statusTxt.innerText = `送信中... (${i + 1}/${keys.length}) \n[${rowName}: ${value}]`;
+            statusTxt.innerHTML = `送信中... (${i + 1} / ${keys.length})<br><br><span style="color:#FFD700;">[ ${rowName}: ${value} ]</span>`;
 
             const payload = {
                 month: selectedMonth,
@@ -284,7 +281,6 @@
             try {
                 await fetch(GAS_WEBAPP_URL, {
                     method: "POST",
-                    method: "POST", // GASへのCORS回避用
                     body: JSON.stringify(payload)
                 });
             } catch (e) {
@@ -292,7 +288,7 @@
             }
         }
 
-        // 完了画面
+        // 送信完了時の表示
         statusTxt.innerHTML = `COMPLETE!<br><br><span style="font-size:14px; color:#CCCC00;">スプレッドシートへの同期が完了しました。</span>`;
         
         const reloadBtn = document.createElement("button");
@@ -302,7 +298,7 @@
         statusSec.appendChild(reloadBtn);
     }
 
-    // アプリ起動
+    // 初回アプリ起動
     renderStep();
 </script>
 </body>
