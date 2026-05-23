@@ -6,12 +6,7 @@
     <title>家計管理入力システム</title>
     <style>
         /* 全体のリセットとベース設定 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-color: #000000;
             color: #FFD700;
@@ -21,7 +16,6 @@
             min-height: 100vh;
         }
 
-        /* スマホサイズのコンテナ */
         .app-container {
             width: 100%;
             max-width: 400px;
@@ -30,43 +24,50 @@
         }
 
         /* ヘッダー */
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-top: 10px;
-        }
-        h1 {
-            font-size: 24px;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        .notice-text {
-            font-size: 11px;
-            color: #CCCC00;
-            line-height: 1.4;
-            text-align: left;
+        header { text-align: center; margin-bottom: 20px; padding-top: 10px; }
+        h1 { font-size: 24px; letter-spacing: 2px; margin-bottom: 10px; }
+        
+        .header-controls {
             background-color: #111100;
             border: 1px solid #555500;
             padding: 10px;
             border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .notice-text {
+            font-size: 12px;
+            color: #CCCC00;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        /* ジャンプメニュー */
+        #jump-select {
+            background-color: #000000;
+            color: #FFD700;
+            border: 1px solid #FFD700;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
         }
 
         /* 入力エリア */
-        .input-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
+        .input-section { display: flex; flex-direction: column; gap: 15px; }
         .input-group label {
             display: block;
             font-size: 16px;
             margin-bottom: 10px;
             font-weight: bold;
             text-align: center;
+            margin-top: 10px;
         }
 
-        input, select {
+        input, select#current-input {
             width: 100%;
             background-color: #111111;
             color: #FFD700;
@@ -79,22 +80,14 @@
             text-align: center;
         }
 
-        input:focus, select:focus {
+        input:focus, select#current-input:focus {
             box-shadow: 0 0 10px #FFD700;
             background-color: #222222;
         }
+        input::placeholder { color: #555500; font-size: 14px; }
 
-        input::placeholder {
-            color: #887700;
-        }
-
-        /* ボタンエリア（入力欄の上） */
-        .btn-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
+        /* ボタンエリア */
+        .btn-container { display: flex; gap: 10px; margin-bottom: 15px; }
         button {
             width: 100%;
             background-color: #FFD700;
@@ -108,35 +101,36 @@
             box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
             transition: 0.2s;
         }
-
         button.btn-back {
             background-color: #222222;
             color: #FFD700;
             border: 1px solid #FFD700;
             box-shadow: none;
         }
+        button:active { transform: scale(0.98); box-shadow: none; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        button:active {
-            transform: scale(0.98);
+        /* 途中送信ボタン */
+        .btn-early {
+            background-color: transparent;
+            color: #CCCC00;
+            border: 1px dashed #CCCC00;
+            margin-top: 20px;
+            font-size: 14px;
+            padding: 12px;
             box-shadow: none;
         }
-        
-        button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         /* ステータス表示 */
         .status-message {
             text-align: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             margin-top: 40px;
             color: #FFF;
+            line-height: 1.5;
             text-shadow: 0 0 5px #FFD700;
         }
     </style>
@@ -146,7 +140,10 @@
 <div class="app-container">
     <header>
         <h1 id="app-title">DATA INPUT</h1>
-        <div class="notice-text" id="progress-text">STEP: 1 / 28</div>
+        <div class="header-controls" id="header-controls">
+            <div class="notice-text" id="progress-text">STEP: 1 / 28</div>
+            <select id="jump-select" onchange="jumpToStep(this.value)"></select>
+        </div>
     </header>
 
     <div id="main-section">
@@ -159,22 +156,21 @@
                     <button id="next-btn" onclick="goNext()">次へ</button>
                 </div>
 
-                <div id="input-slot">
-                    </div>
+                <div id="input-slot"></div>
+                
+                <button id="submit-early-btn" class="btn-early hidden" onclick="submitEarly()">📥 入力した分だけ今すぐ送信</button>
             </div>
         </div>
     </div>
 
     <div class="status-message hidden" id="status-section">
-        <p id="status-text">スプレッドシートに送信中...</p>
+        <p id="status-text">通信準備中...</p>
     </div>
 </div>
 
 <script>
-    // GASウェブアプリURL
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzD0dRAZDf0o9d_IWosCbDyPXKJrPfjeN1bWkLdQb4gJOe6Jt0lI_v9Ntbhqz-beZSy/exec";
 
-    // 💡 スプレッドシート記載の手入力項目を完璧に網羅（全28ステップ）
     const steps = [
         { name: "年月", label: "年月はいつのですか？", type: "select", options: ["2026/04", "2026/05", "2026/06", "2026/07", "2026/08", "2026/09"] },
         { name: "基準賃金", label: "基準賃金はいくらですか？", type: "number" },
@@ -205,14 +201,26 @@
     ];
 
     let currentStepIndex = 0;
-    let selectedMonth = "";
+    let selectedMonth = steps[0].options[0]; // 初期値をセット
     let inputValues = {}; 
+
+    // アプリ起動時の初期設定
+    function initApp() {
+        const jumpSelect = document.getElementById("jump-select");
+        steps.forEach((step, index) => {
+            const opt = document.createElement("option");
+            opt.value = index;
+            opt.text = `[${index + 1}/${steps.length}] ${step.name}`;
+            jumpSelect.appendChild(opt);
+        });
+        renderStep();
+    }
 
     function renderStep() {
         const step = steps[currentStepIndex];
         
-        // ヘッダー進行度テキスト更新
-        document.getElementById("progress-text").innerText = `STEP: ${currentStepIndex + 1} / ${steps.length} (${step.name})`;
+        document.getElementById("progress-text").innerText = `STEP: ${currentStepIndex + 1} / ${steps.length}`;
+        document.getElementById("jump-select").value = currentStepIndex; // ジャンプメニューを同期
         document.getElementById("question-label").innerText = step.label;
         
         const slot = document.getElementById("input-slot");
@@ -234,7 +242,7 @@
             input.id = "current-input";
             input.type = "number";
             input.pattern = "\\d*"; 
-            input.placeholder = "0";
+            input.placeholder = "空白のまま進むとスキップ(上書きなし)"; // 説明を追加
             
             if (inputValues[step.name] !== undefined) {
                 input.value = inputValues[step.name];
@@ -245,18 +253,36 @@
 
         document.getElementById("back-btn").disabled = (currentStepIndex === 0);
         document.getElementById("next-btn").innerText = (currentStepIndex === steps.length - 1) ? "シートに送信" : "次へ";
+        
+        // 年月選択以外の画面で「途中送信」ボタンを表示
+        const earlyBtn = document.getElementById("submit-early-btn");
+        if (currentStepIndex > 0) {
+            earlyBtn.classList.remove("hidden");
+        } else {
+            earlyBtn.classList.add("hidden");
+        }
     }
 
-    function goNext() {
+    // 現在の入力値を一時保存する処理
+    function saveCurrentInput() {
         const el = document.getElementById("current-input");
         const currentStep = steps[currentStepIndex];
-
         if (currentStep.type === "select") {
             selectedMonth = el.value;
         } else {
-            inputValues[currentStep.name] = el.value || "0";
+            // 💡 0で埋めず、空文字のまま保存する
+            inputValues[currentStep.name] = el.value;
         }
+    }
 
+    function jumpToStep(index) {
+        saveCurrentInput();
+        currentStepIndex = parseInt(index);
+        renderStep();
+    }
+
+    function goNext() {
+        saveCurrentInput();
         if (currentStepIndex < steps.length - 1) {
             currentStepIndex++;
             renderStep();
@@ -266,25 +292,37 @@
     }
 
     function goBack() {
+        saveCurrentInput();
         if (currentStepIndex > 0) {
             currentStepIndex--;
             renderStep();
         }
     }
 
+    function submitEarly() {
+        saveCurrentInput();
+        submitAllData();
+    }
+
     async function submitAllData() {
         document.getElementById("main-section").classList.add("hidden");
+        document.getElementById("header-controls").classList.add("hidden");
         const statusSec = document.getElementById("status-section");
         const statusTxt = document.getElementById("status-text");
         statusSec.classList.remove("hidden");
 
         const keys = Object.keys(inputValues);
+        let sentCount = 0;
         
         for (let i = 0; i < keys.length; i++) {
             const rowName = keys[i];
             const value = inputValues[rowName];
             
-            statusTxt.innerHTML = `送信中... (${i + 1} / ${keys.length})<br><br><span style="color:#FFD700;">[ ${rowName}: ${value} ]</span>`;
+            // 💡 空白（未入力）の場合はGASに送らない（元のデータを保護）
+            if (value === "" || value === undefined) continue;
+
+            sentCount++;
+            statusTxt.innerHTML = `送信中... (${sentCount}個目のデータを更新)<br><br><span style="color:#FFD700;">[ ${rowName}: ${value} ]</span>`;
 
             const payload = {
                 month: selectedMonth,
@@ -302,16 +340,21 @@
             }
         }
 
-        statusTxt.innerHTML = `COMPLETE!<br><br><span style="font-size:14px; color:#CCCC00;">スプレッドシートへの同期が完了しました。</span>`;
+        if (sentCount === 0) {
+            statusTxt.innerHTML = `送信する新しいデータがありませんでした。<br><br><span style="font-size:14px; color:#CCCC00;">※空欄の項目はスキップされ、既存データは保護されました。</span>`;
+        } else {
+            statusTxt.innerHTML = `COMPLETE!<br><br><span style="font-size:14px; color:#CCCC00;">${sentCount}件のデータをスプレッドシートに同期しました。</span>`;
+        }
         
         const reloadBtn = document.createElement("button");
-        reloadBtn.innerText = "続けて別の月を入力する";
+        reloadBtn.innerText = "続けて別の操作をする";
         reloadBtn.style.marginTop = "30px";
         reloadBtn.onclick = () => location.reload();
         statusSec.appendChild(reloadBtn);
     }
 
-    renderStep();
+    // 起動
+    initApp();
 </script>
 </body>
 </html>
