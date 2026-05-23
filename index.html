@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家計管理入力システム</title>
+    <style>
+        /* ご提示いただいたローンシミュレーション風高級CSSを完全ベース化 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* スマホサイズのコンテナ */
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ヘッダー */
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-top: 10px;
+        }
+        h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .notice-text {
+            font-size: 11px;
+            color: #CCCC00;
+            line-height: 1.4;
+            text-align: left;
+            background-color: #111100;
+            border: 1px solid #555500;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        /* 入力エリア */
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex-grow: 1;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        input, select {
+            width: 100%;
+            background-color: #111111;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 14px;
+            font-size: 20px;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        input:focus, select:focus {
+            box-shadow: 0 0 10px #FFD700;
+            background-color: #222222;
+        }
+
+        input::placeholder {
+            color: #887700;
+        }
+
+        /* ボタンエリア */
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            width: 100%;
+            background-color: #FFD700;
+            color: #000000;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+            transition: 0.2s;
+        }
+
+        button.btn-back {
+            background-color: #222222;
+            color: #FFD700;
+            border: 1px solid #FFD700;
+            box-shadow: none;
+        }
+
+        button:active {
+            transform: scale(0.98);
+            box-shadow: none;
+        }
+        
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ローディング・完了画面用 */
+        .status-message {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 40px;
+            color: #FFF;
+            text-shadow: 0 0 5px #FFD700;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1 id="app-title">DATA INPUT</h1>
+        <div class="notice-text" id="progress-text">STEP: 1 / 8</div>
+    </header>
+
+    <div class="input-section" id="main-section">
+        <div class="input-group">
+            <label id="question-label">年月はいつのですか？</label>
+            <div id="input-slot">
+                </div>
+        </div>
+    </div>
+
+    <div class="status-message hidden" id="status-section">
+        <p id="status-text">スプレッドシートに送信中...</p>
+    </div>
+
+    <div class="btn-container" id="action-container">
+        <button class="btn-back" id="back-btn" onclick="goBack()" disabled>戻る</button>
+        <button id="next-btn" onclick="goNext()">次へ</button>
+    </div>
+</div>
+
+<script>
+    // ⚠️ あなたのGASウェブアプリのURLをここに貼り付けてください
+    const GAS_WEBAPP_URL = "★ここにGASのURLを貼り付ける★";
+
+    // 質問の定義リスト。スプレッドシートのA列の文字列（項目名）と一言一句完全に一致させてください。
+    const steps = [
+        { name: "年月", label: "年月はいつのですか？", type: "select", options: ["2026/04", "2026/05", "2026/06", "2026/07", "2026/08", "2026/09"] },
+        { name: "基準賃金", label: "基準賃金はいくらですか？", type: "number" },
+        { name: "家族手当", label: "家族手当はいくらですか？", type: "number" },
+        { name: "休暇手当", label: "休暇手当はいくらですか？", type: "number" },
+        { name: "時間外手当", label: "時間外手当はいくらですか？", type: "number" },
+        { name: "日産でんき", label: "日産でんき はいくらですか？", type: "number" },
+        { name: "東京ガス", label: "東京ガス はいくらですか？", type: "number" },
+        { name: "ahamo", label: "ahamo はいくらですか？", type: "number" }
+    ];
+
+    let currentStepIndex = 0;
+    let selectedMonth = "";
+    let inputValues = {}; // { 項目名: 値 } で一時保存
+
+    function renderStep() {
+        const step = steps[currentStepIndex];
+        
+        // ヘッダー進行度の更新
+        document.getElementById("progress-text").innerText = `STEP: ${currentStepIndex + 1} / ${steps.length} (${step.name})`;
+        document.getElementById("question-label").innerText = step.label;
+        
+        const slot = document.getElementById("input-slot");
+        slot.innerHTML = ""; // 初期化
+
+        if (step.type === "select") {
+            const select = document.createElement("select");
+            select.id = "current-input";
+            step.options.forEach(opt => {
+                const option = document.createElement("option");
+                option.value = opt;
+                option.text = opt;
+                if (selectedMonth === opt) option.selected = true;
+                select.appendChild(option);
+            });
+            slot.appendChild(select);
+        } else {
+            const input = document.createElement("input");
+            input.id = "current-input";
+            input.type = "number";
+            input.pattern = "\\d*"; // スマホで数字キーボードを出す
+            input.placeholder = "0";
+            // 過去に戻ったときに元々入力していた値を復元
+            if (inputValues[step.name] !== undefined) {
+                input.value = inputValues[step.name];
+            }
+            slot.appendChild(input);
+            input.focus();
+        }
+
+        // 戻るボタンの制御
+        document.getElementById("back-btn").disabled = (currentStepIndex === 0);
+        // 最終ステップならボタンの文言を変更
+        document.getElementById("next-btn").innerText = (currentStepIndex === steps.length - 1) ? "シートに送信" : "次へ";
+    }
+
+    function goNext() {
+        const el = document.getElementById("current-input");
+        const currentStep = steps[currentStepIndex];
+
+        if (currentStep.type === "select") {
+            selectedMonth = el.value;
+        } else {
+            inputValues[currentStep.name] = el.value || "0";
+        }
+
+        if (currentStepIndex < steps.length - 1) {
+            currentStepIndex++;
+            renderStep();
+        } else {
+            submitAllData();
+        }
+    }
+
+    function goBack() {
+        if (currentStepIndex > 0) {
+            currentStepIndex--;
+            renderStep();
+        }
+    }
+
+    async function submitAllData() {
+        // UIを通信中モードに切り替え
+        document.getElementById("main-section").classList.add("hidden");
+        document.getElementById("action-container").classList.add("hidden");
+        const statusSec = document.getElementById("status-section");
+        const statusTxt = document.getElementById("status-text");
+        statusSec.classList.remove("hidden");
+
+        // 各項目をループしてGASへ順番に送信
+        const keys = Object.keys(inputValues);
+        for (let i = 0; i < keys.length; i++) {
+            const rowName = keys[i];
+            const value = inputValues[rowName];
+            
+            statusTxt.innerText = `送信中... (${i + 1}/${keys.length}) \n[${rowName}: ${value}]`;
+
+            const payload = {
+                month: selectedMonth,
+                rowName: rowName,
+                value: value
+            };
+
+            try {
+                await fetch(GAS_WEBAPP_URL, {
+                    method: "POST",
+                    method: "POST", // GASへのCORS回避用
+                    body: JSON.stringify(payload)
+                });
+            } catch (e) {
+                console.error("送信エラー:", e);
+            }
+        }
+
+        // 完了画面
+        statusTxt.innerHTML = `COMPLETE!<br><br><span style="font-size:14px; color:#CCCC00;">スプレッドシートへの同期が完了しました。</span>`;
+        
+        const reloadBtn = document.createElement("button");
+        reloadBtn.innerText = "続けて別の月を入力する";
+        reloadBtn.style.marginTop = "30px";
+        reloadBtn.onclick = () => location.reload();
+        statusSec.appendChild(reloadBtn);
+    }
+
+    // アプリ起動
+    renderStep();
+</script>
+</body>
+</html>
